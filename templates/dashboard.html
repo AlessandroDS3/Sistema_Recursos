@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #fff7f7;
+      margin: 0;
+      padding: 40px;
+    }
+    .container {
+      max-width: 900px;
+      margin: auto;
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    }
+    h1, h2 {
+      color: #1f2937;
+    }
+    .badge {
+      display: inline-block;
+      background: #b51f32;
+      color: white;
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    li {
+      background: #fff0f1;
+      margin: 8px 0;
+      padding: 12px 15px;
+      border-radius: 8px;
+      border-left: 5px solid #b51f32;
+    }
+    .admin-link {
+      display: block;
+      color: inherit;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .admin-link:hover {
+      color: #921729;
+      text-decoration: underline;
+    }
+    .logout-button {
+      margin-top: 18px;
+      padding: 10px 14px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      background: white;
+      color: #374151;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <h1>Sistema de Préstamos</h1>
+    <div class="badge">{{ panel['titulo'] }}</div>
+    <h2>Bienvenido, {{ usuario['nombres'] }} {{ usuario['apellidos'] }}</h2>
+    <p>{{ panel['mensaje'] }}</p>
+
+    {% if rol == 'ADMINISTRADOR' %}
+      
+      <ul>
+        <li>Gestionar usuarios</li>
+        <li><a class="admin-link" href="{{ url_for('administrar_recursos') }}">Administrar recursos y bienes materiales →</a></li>
+        <li>Ver reportes del sistema</li>
+        <li>Configurar políticas</li>
+      </ul>
+    {% elif rol == 'ENCARGADO_DE_PRESTAMOS' %}
+      <ul>
+        <li>Registrar préstamos</li>
+        <li>Controlar devoluciones</li>
+        <li>Gestionar reservas</li>
+        <li>Revisar sanciones</li>
+      </ul>
+    {% else %}
+      <ul>
+        <li>Consultar mis préstamos</li>
+        <li>Ver mis reservas</li>
+        <li>Revisar historial</li>
+        <li>Actualizar perfil</li>
+      </ul>
+    {% endif %}
+    <form action="{{ url_for('logout') }}" method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button class="logout-button" type="submit">Cerrar sesión</button>
+    </form>
+  </div>
+</body>
+</html>

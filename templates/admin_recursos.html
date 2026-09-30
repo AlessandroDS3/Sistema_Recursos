@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Administrar recursos · Sistema de Préstamos</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/recursos.css') }}">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="{{ url_for('dashboard') }}"><span class="brand-mark">SP</span><span>Sistema de Préstamos<small>Administración de inventario</small></span></a>
+    <div class="top-actions">
+      <span class="signed-in">{{ usuario['nombres'] }} {{ usuario['apellidos'] }}</span>
+      <a class="button button-light" href="{{ url_for('dashboard') }}">Volver al panel</a>
+      <form action="{{ url_for('logout') }}" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button class="button button-quiet" type="submit">Cerrar sesión</button>
+      </form>
+    </div>
+  </header>
+
+  <main class="page-shell">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="messages" role="status">
+        {% for category, message in messages %}
+          <p class="alert alert-{{ category }}">{{ message }}</p>
+        {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <section class="page-heading">
+      <div><p class="eyebrow">INVENTARIO · SOLO ADMINISTRADORES</p><h1>Recursos y bienes materiales</h1><p>Registra artículos, organiza ejemplares y mantén actualizado el inventario.</p></div>
+      <a class="button button-primary" href="#nuevo-recurso">＋ Registrar artículo</a>
+    </section>
+
+    <section class="summary" aria-label="Resumen del inventario">
+      <article><span>Artículos</span><strong>{{ recursos|length }}</strong></article>
+      <article><span>Bienes registrados</span><strong>{{ recursos|sum(attribute='total') }}</strong></article>
+      <article><span>Bienes disponibles</span><strong>{{ recursos|sum(attribute='disponibles') }}</strong></article>
+    </section>
+
+    <section class="panel" id="nuevo-recurso">
+      <div class="section-title"><div><p class="eyebrow">NUEVO REGISTRO</p><h2>Registrar artículo</h2></div><span class="step-badge">Artículo + primer ejemplar</span></div>
+      {% if categorias %}
+      <form class="form-grid" action="{{ url_for('crear_recurso') }}" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <label>Nombre del artículo *<input name="nombre" required maxlength="100" placeholder="Ej. Laptop para laboratorio"></label>
+        <label>Tipo *<select name="tipo" required><option value="">Selecciona un tipo</option>{% for tipo in tipos %}<option value="{{ tipo }}">{{ tipo|capitalize }}</option>{% endfor %}</select></label>
+        <label>Categoría *<select name="id_categoria" required><option value="">Selecciona una categoría</option>{% for categoria in categorias %}<option value="{{ categoria.id_categoria }}">{{ categoria.nombre }}</option>{% endfor %}</select></label>
+        <div class="read-only-state"><span>Estado inicial</span><strong>Disponible</strong><input type="hidden" name="estado" value="DISPONIBLE"></div>
+        <label class="full">Descripción<textarea name="descripcion" maxlength="255" rows="2" placeholder="Descripción breve"></textarea></label>
+        <div class="form-divider"><strong>Primer ejemplar físico</strong><span>El estado inicial del ejemplar será Disponible.</span></div>
+        <label>Código de inventario *<input name="codigo_inventario" required maxlength="100" pattern="[A-Za-z0-9][A-Za-z0-9._-]*" placeholder="Ej. CC-LAP-001"></label>
+        <label>Número de serie<input name="numero_serie" maxlength="100" placeholder="Opcional; se genera uno si queda vacío"></label>
+        <label>Ubicación<input name="ubicacion" maxlength="150" placeholder="Ej. Laboratorio 01"></label>
+        <div class="form-actions"><button class="button button-primary" type="submit">Guardar artículo</button></div>
+      </form>
+      {% else %}
+      <p class="empty-note">Primero registra una categoría en la sección “Categorías”; luego podrás dar de alta artículos.</p>
+      {% endif %}
+    </section>
+
+    <section class="panel categories-panel">
+      <div class="section-title"><div><p class="eyebrow">CLASIFICACIÓN</p><h2>Categorías</h2></div><span class="muted">{{ categorias|length }} registradas</span></div>
+      <div class="category-content">
+        <div class="category-list">
+          {% if categorias %}<ul>{% for categoria in categorias %}<li><strong>{{ categoria.nombre }}</strong>{% if categoria.descripcion %}<span>{{ categoria.descripcion }}</span>{% endif %}</li>{% endfor %}</ul>{% else %}<p class="muted">Todavía no hay categorías.</p>{% endif %}
+        </div>
+        <form class="category-form" action="{{ url_for('crear_categoria') }}" method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <label>Nueva categoría<input name="nombre" required maxlength="100" placeholder="Ej. Equipos de cómputo"></label>
+          <label>Descripción<input name="descripcion" maxlength="255" placeholder="Opcional"></label>
+          <button class="button button-secondary" type="submit">＋ Añadir categoría</button>
+        </form>
+      </div>
+    </section>
+
+    <section class="inventory-section">
+      <div class="section-title inventory-title"><div><p class="eyebrow">CATÁLOGO</p><h2>Artículos registrados</h2></div><span class="muted">{{ recursos|length }} artículos</span></div>
+      {% if recursos %}
+        <div class="resource-list">
+        {% for recurso in recursos %}
+          <article class="resource-card">
+            <div class="resource-overview">
+              <div class="resource-icon">{{ recurso.tipo[:2] }}</div>
+              <div class="resource-main"><div class="resource-line"><span class="type-label">{{ recurso.tipo }}</span><span class="state state-{{ recurso.estado|lower }}">{{ recurso.estado|capitalize }}</span></div><h3>{{ recurso.nombre }}</h3><p>{{ recurso.categoria }}{% if recurso.descripcion %}<span> · {{ recurso.descripcion }}</span>{% endif %}</p></div>
+              <div class="resource-count"><strong>{{ recurso.total }}</strong><span>ejemplares</span><small>{{ recurso.disponibles }} disponibles</small></div>
+            </div>
+            <details class="management-details">
+              <summary>Administrar artículo y ejemplares</summary>
+              <div class="management-content">
+                <form class="edit-resource form-grid" action="{{ url_for('editar_recurso', id_recurso=recurso.id_recurso) }}" method="post">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                  <label>Nombre<input name="nombre" value="{{ recurso.nombre }}" required maxlength="100"></label>
+                  <label>Tipo<select name="tipo">{% for tipo in tipos %}<option value="{{ tipo }}" {% if tipo == recurso.tipo %}selected{% endif %}>{{ tipo|capitalize }}</option>{% endfor %}</select></label>
+                  <label>Categoría<select name="id_categoria">{% for categoria in categorias %}<option value="{{ categoria.id_categoria }}" {% if categoria.id_categoria == recurso.id_categoria %}selected{% endif %}>{{ categoria.nombre }}</option>{% endfor %}</select></label>
+                  <label>Estado<select name="estado">{% for estado in estados %}{% if estado not in ['PRESTADO', 'RESERVADO'] or estado == recurso.estado %}<option value="{{ estado }}" {% if estado == recurso.estado %}selected{% endif %}>{{ estado|capitalize }}</option>{% endif %}{% endfor %}</select></label>
+                  <label class="full">Descripción<textarea name="descripcion" maxlength="255" rows="2">{{ recurso.descripcion or '' }}</textarea></label>
+                  <div class="form-actions"><button class="button button-secondary" type="submit">Guardar cambios</button></div>
+                </form>
+
+                <div class="goods-heading"><h4>Ejemplares</h4><span>{{ recurso.total }} en total</span></div>
+                {% if recurso.bienes %}
+                  <div class="goods-list">
+                  {% for bien in recurso.bienes %}
+                    <form class="good-row" action="{{ url_for('editar_bien', id_bien=bien.id_bien) }}" method="post">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                      <label>Código<input name="codigo_inventario" value="{{ bien.codigo_inventario }}" required maxlength="100" pattern="[A-Za-z0-9][A-Za-z0-9._-]*"></label>
+                      <label>Serie<input name="numero_serie" value="{{ bien.numero_serie or '' }}" maxlength="100"></label>
+                      <label>Estado<select name="estado">{% for estado in estados %}{% if estado not in ['PRESTADO', 'RESERVADO'] or estado == bien.estado %}<option value="{{ estado }}" {% if estado == bien.estado %}selected{% endif %}>{{ estado|capitalize }}</option>{% endif %}{% endfor %}</select></label>
+                      <label>Ubicación<input name="ubicacion" value="{{ bien.ubicacion or '' }}" maxlength="150"></label>
+                      <input type="hidden" name="_action" value="edit">
+                      <button class="button button-small button-secondary" type="submit">Guardar</button>
+                      {% if bien.estado|upper == 'DISPONIBLE' %}
+                      <button class="button button-small button-danger" type="submit" formaction="{{ url_for('eliminar_bien', id_bien=bien.id_bien) }}" formmethod="post" name="csrf_token" value="{{ csrf_token }}" onclick="return confirm('¿Eliminar este ejemplar?')">Eliminar</button>
+                      {% else %}<span class="locked-note">No disponible</span>{% endif %}
+                    </form>
+                  {% endfor %}
+                  </div>
+                {% else %}<p class="empty-note">Este artículo aún no tiene ejemplares.</p>{% endif %}
+
+                <form class="add-good form-grid" action="{{ url_for('agregar_bien', id_recurso=recurso.id_recurso) }}" method="post">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                  <div class="form-divider"><strong>Agregar otro ejemplar</strong></div>
+                  <label>Código de inventario *<input name="codigo_inventario" required maxlength="100" pattern="[A-Za-z0-9][A-Za-z0-9._-]*"></label>
+                  <label>Número de serie<input name="numero_serie" maxlength="100"></label>
+                  <label>Ubicación<input name="ubicacion" maxlength="150"></label>
+                  <div class="form-actions"><button class="button button-secondary" type="submit">＋ Agregar ejemplar</button></div>
+                </form>
+
+                <form class="delete-resource" action="{{ url_for('eliminar_recurso', id_recurso=recurso.id_recurso) }}" method="post" onsubmit="return confirm('¿Eliminar el artículo y todos sus ejemplares disponibles? Los registros relacionados con préstamos o reservas no se podrán eliminar.')">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                  <button class="button button-danger" type="submit">Eliminar artículo y ejemplares</button>
+                  <span>Solo se permite si todo está disponible y no existen referencias a préstamos, reservas o inventario.</span>
+                </form>
+              </div>
+            </details>
+          </article>
+        {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state"><span class="empty-icon">▦</span><h3>Aún no hay artículos</h3><p>Agrega una categoría y registra el primer artículo para iniciar el inventario.</p></div>
+      {% endif %}
+    </section>
+    <footer class="page-footer">Sistema de Préstamos <span>·</span> Administración de recursos</footer>
+  </main>
+</body>
+</html>

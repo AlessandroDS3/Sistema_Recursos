@@ -1,5 +1,28 @@
+
+# Python cache
 __pycache__/
-*.pyc
-data/*.sqlite3
-data/*.sqlite3-*
-.venv/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Entorno virtual
+venv/
+
+# Configuración local y datos sensibles
+.env
+.env.*
+*.sqlite3
+*.db
+*.log
+
+# IDE/editor
+.vscode/
+.idea/
+.DS_Store
+
+# Archivos de compilación
+build/
+dist/
+*.egg-info
+

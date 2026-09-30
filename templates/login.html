@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Préstamos</title>
+  <link rel="stylesheet" href="../static/css/login.css">
+</head>
+
+<body>
+    <section>
+    <div class="login-box">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <form action="/login" method="POST">
+        <h2>Iniciar Sesion</h2>
+        <div class="input-box">
+          <span class="icon"><ion-icon name="mail"></ion-icon></span>
+          <input type="email" name="email" required>
+          <label>Email</label>
+        </div>
+        <div class="input-box">
+          <span class="icon"><ion-icon name="lock-closed"></ion-icon></span>
+          <input type="password" name="password" required>
+          <label>Password</label>
+        </div>
+        <div class="input-box">
+          <span class="icon"><ion-icon name="person"></ion-icon></span>
+          <input type="text" id="rol" name="rol" list="roles-lista" required placeholder=" ">
+            <label for="rol">Seleccione su rol</label>
+          <datalist id="roles-lista">
+            <option value="Usuario">
+            <option value="Encargado de Prestamos">
+            <option value="Administrador">
+          </datalist>
+        </div>
+        <button type="submit">Entrar</button>
+      </form>
+    </div>
+    </section>
+    <script type="module" src="https://unpkg.com/ionicons@8.0.13/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@8.0.13/dist/ionicons/ionicons.js"></script>
+  </body>
+</html>
